@@ -1,0 +1,82 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.apache.jena</groupId>
+  <artifactId>jena-jsonld</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>Jena JSON-LD</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jdk.version>1.7</jdk.version>
+    <targetJdk>${jdk.version}</targetJdk>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>apache-jena-libs</artifactId>
+      <version>[2.10.1-SNAPSHOT,)</version>
+      <type>pom</type>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Must install in local repo -->
+    <dependency>
+      <groupId>dfki.km.json</groupId>
+      <artifactId>jsonld-java</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+	  <groupId>org.slf4j</groupId>
+	  <artifactId>slf4j-jdk14</artifactId>
+	</exclusion>
+      </exclusions>
+    </dependency>
+    
+  </dependencies>
+  
+  <build>
+    <pluginManagement>
+      <plugins>
+	
+	<plugin>
+	  <groupId>org.apache.maven.plugins</groupId>
+	  <artifactId>maven-surefire-plugin</artifactId>
+	  <version>2.12.4</version>
+	  <configuration>
+	    <parallel>classes</parallel>
+	    <includes>
+	      <include>**/FirstJenaTest.java</include>
+	      <include>**/SecondJenaTest.java</include>
+	    </includes>
+	  </configuration>
+	</plugin> 
+
+
+	<plugin>
+	  <groupId>org.apache.maven.plugins</groupId>
+	  <artifactId>maven-compiler-plugin</artifactId>
+	  <version>2.5.1</version>
+	  <configuration>
+	    <encoding>UTF-8</encoding>
+	    <debug>true</debug>
+	    <debuglevel>source,lines,vars</debuglevel>
+	    <optimize>true</optimize>
+	    <source>${jdk.version}</source>
+	    <target>${jdk.version}</target>
+	  </configuration>
+	</plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

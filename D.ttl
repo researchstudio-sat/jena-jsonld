@@ -1,0 +1,13 @@
+@prefix : <http://example/> .
+
+:s :p 1 , 2 .
+
+:x1 :q ("a" "b") .
+
+:s1 :b _:a .
+:s2 :b _:a .
+
+:s3 :b1 _:aa .
+:s3 :b2 _:aa .
+
+:x2 :q [ :r 4.5 ] .
