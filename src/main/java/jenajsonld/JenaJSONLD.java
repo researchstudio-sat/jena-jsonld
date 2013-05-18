@@ -20,18 +20,23 @@ package jenajsonld;
 
 import org.apache.jena.riot.* ;
 import org.apache.jena.riot.adapters.RDFReaderRIOT ;
-import riot.* ;
-import riot.adpaters.RDFWriterRIOT ;
-import riot.system.RiotWriterLib ;
+import org.apache.jena.riot.adapters.RDFWriterRIOT ;
+import org.apache.jena.riot.system.RiotLib ;
+
+import com.hp.hpl.jena.rdf.model.impl.IO_Ctl ;
 
 public class JenaJSONLD
 {
     public static Lang JSONLD = LangBuilder.create("JSON-LD", "application/ld+json")
         //.addAltNames("RDF/JSON-LD")
         .addFileExtensions("jsonld").build() ;
+ 
     
-    public static void init()
-    {
+    
+    public static void init() {}
+    static {
+        // Temp
+        IO_Ctl.init() ;
         initReader() ;
         initWriter() ;
     }
@@ -61,8 +66,8 @@ public class JenaJSONLD
 
     private static void initWriter()
     {
-        RDFFormat format1 = new RDFFormat(JSONLD, RDFFormat.wvPretty) ;
-        RDFFormat format2 = new RDFFormat(JSONLD, RDFFormat.wvFlat) ;
+        RDFFormat format1 = new RDFFormat(JSONLD, RDFFormat.PRETTY) ;
+        RDFFormat format2 = new RDFFormat(JSONLD, RDFFormat.FLAT) ;
         
         // Register the default format for the language.
         RDFWriterRegistry.register(JSONLD, format1)  ;
@@ -83,7 +88,7 @@ public class JenaJSONLD
             @Override
             public WriterGraphRIOT create(RDFFormat syntaxForm)
             {
-                return RiotWriterLib.adapter(new JsonLDWriter(syntaxForm)) ;
+                return RiotLib.adapter(new JsonLDWriter(syntaxForm)) ;
             }} ;
         RDFWriterRegistry.register(format1, wfactory2) ;
         RDFWriterRegistry.register(format2, wfactory2) ;

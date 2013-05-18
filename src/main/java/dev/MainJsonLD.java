@@ -18,21 +18,22 @@
 
 package dev;
 
+import static jenajsonld.JenaJSONLD.JSONLD ;
+
 import java.io.ByteArrayInputStream ;
 import java.io.ByteArrayOutputStream ;
 
 import jenajsonld.JenaJSONLD ;
-import static jenajsonld.JenaJSONLD.JSONLD; 
 import org.apache.jena.atlas.logging.Log ;
+import org.apache.jena.riot.Lang ;
 import org.apache.jena.riot.RDFDataMgr ;
+import org.apache.jena.riot.lang.PrintingStreamRDF ;
+import org.apache.jena.riot.system.StreamRDF ;
 import org.slf4j.Logger ;
 import org.slf4j.LoggerFactory ;
-import riot.RDFWriterMgr ;
-import riot.system.IO_Jena2 ;
 
 import com.hp.hpl.jena.rdf.model.Model ;
 import com.hp.hpl.jena.rdf.model.ModelFactory ;
-import com.hp.hpl.jena.rdf.model.impl.IO_Ctl ;
 
 public class MainJsonLD
 {
@@ -41,17 +42,14 @@ public class MainJsonLD
     
     public static void main(String[] args)
     {
-        IO_Ctl.init() ;
-        IO_Jena2.wireIntoJenaW() ;
-        
         JenaJSONLD.init() ;
         
         rtRJR("D.ttl") ;
-        rtRJR("data.jsonld") ;
-        
-        rtRJR2("D.ttl") ;
-        rtRJR2("data.jsonld") ;
-        System.out.println("DONE") ;
+//        rtRJR("data.jsonld") ;
+//        
+//        rtRJR2("D.ttl") ;
+//        rtRJR2("data.jsonld") ;
+//        System.out.println("DONE") ;
         System.exit(0) ;
 
         String filename = "data.jsonld" ;
@@ -60,11 +58,13 @@ public class MainJsonLD
 //        RDFDataMgr.parse(stream, filename) ;
         
         Model model = RDFDataMgr.loadModel(filename) ;
-        RDFWriterMgr.write(System.out, model, JSONLD) ;
+        RDFDataMgr.write(System.out, model, Lang.TURTLE) ;
+        //RDFDataMgr.write(System.out, model, JSONLD) ;
         
         System.out.print("\n## -------------\n\n") ;
         
         model.write(System.out, "JSON-LD") ;
+        System.out.print("\n## -------------\n\n") ;
     }
     
     static void rtRJR(String filename)
@@ -73,13 +73,14 @@ public class MainJsonLD
         Model model = RDFDataMgr.loadModel(filename) ;
         
         ByteArrayOutputStream out = new ByteArrayOutputStream() ;
-        RDFWriterMgr.write(out, model, JSONLD) ;
+        RDFDataMgr.write(out, model, JSONLD) ;
+        RDFDataMgr.write(System.out, model, JSONLD) ;
         ByteArrayInputStream r = new ByteArrayInputStream(out.toByteArray()) ;
         
         Model model2 = ModelFactory.createDefaultModel() ;
         RDFDataMgr.read(model2, r, null, JSONLD) ;
-        if ( ! model.isIsomorphicWith(model2) ) 
-            System.out.println("## ---- DIFFERENT") ;
+//        if ( ! model.isIsomorphicWith(model2) ) 
+//            System.out.println("## ---- DIFFERENT") ;
     }
     
     static void rtRJR2(String filename)

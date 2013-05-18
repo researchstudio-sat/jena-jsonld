@@ -9,5 +9,5 @@ The adapter provides complete integration into jena including:
 
     model.write(System.out, "JSON-LD") ;
 
-This code currently depends on
-https://svn.apache.org/repos/asf/jena/branches/arq-riot-output/
+This code currently depends on Jena 2.10.1 SNAPSHOT.
+

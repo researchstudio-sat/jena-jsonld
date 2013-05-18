@@ -16,6 +16,7 @@
   </properties>
 
   <dependencies>
+
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>apache-jena-libs</artifactId>
@@ -32,13 +33,23 @@
 
     <!-- Must install in local repo -->
     <dependency>
-      <groupId>dfki.km.json</groupId>
+      <groupId>com.github.jsonld-java</groupId>
       <artifactId>jsonld-java</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>0.1-SNAPSHOT</version>
       <exclusions>
         <exclusion>
 	  <groupId>org.slf4j</groupId>
 	  <artifactId>slf4j-jdk14</artifactId>
+	</exclusion>
+
+	<!-- These are optional in jsonld-java but anyway ... -->
+	<exclusion>
+	  <groupId>org.openrdf.sesame</groupId>
+	  <artifactId>sesame-model</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.apache.clerezza</groupId>
+	  <artifactId>rdf.core</artifactId>
 	</exclusion>
       </exclusions>
     </dependency>
@@ -54,10 +65,8 @@
 	  <artifactId>maven-surefire-plugin</artifactId>
 	  <version>2.12.4</version>
 	  <configuration>
-	    <parallel>classes</parallel>
 	    <includes>
-	      <include>**/FirstJenaTest.java</include>
-	      <include>**/SecondJenaTest.java</include>
+	      <include>**/TS_*.java</include>
 	    </includes>
 	  </configuration>
 	</plugin> 

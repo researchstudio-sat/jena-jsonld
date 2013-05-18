@@ -2,20 +2,19 @@
     "http://example/r" : [ { "@type" : "http://www.w3.org/2001/XMLSchema#decimal" ,
           "@value" : "4.5"
         } ]
-  },
+  }
+,
   { "@id" : "http://example/s" ,
     "http://example/p" : 
       [ { "@value" : 2 },
         { "@value" : 1 }
        ]
-  },
+  }
+,
   { "@id" : "http://example/x1" ,
     "http://example/q" : [ { "@list" : 
             [ { "@value" : "a" },
               { "@value" : "b" }
              ] } ]
-  },
-  { "@id" : "http://example/x2" ,
-    "http://example/q" : [ { "@id" : "_:t0" } ]
   }
  ]

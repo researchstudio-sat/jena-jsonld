@@ -20,21 +20,27 @@ package jenajsonld;
 
 import java.io.IOException ;
 import java.io.InputStream ;
+import java.util.List ;
+import java.util.Map ;
 
-import com.hp.hpl.jena.datatypes.RDFDatatype ;
-import com.hp.hpl.jena.graph.Node ;
-import com.hp.hpl.jena.graph.Triple ;
-import com.hp.hpl.jena.sparql.util.Context ;
-
-import de.dfki.km.json.JSONUtils ;
-import de.dfki.km.json.jsonld.JSONLD ;
-import de.dfki.km.json.jsonld.JSONLDProcessingError ;
-import de.dfki.km.json.jsonld.JSONLDTripleCallback ;
-
+import org.apache.jena.atlas.lib.InternalErrorException ;
 import org.apache.jena.atlas.web.ContentType ;
 import org.apache.jena.riot.ReaderRIOT ;
 import org.apache.jena.riot.lang.LabelToNode ;
 import org.apache.jena.riot.system.StreamRDF ;
+
+import com.github.jsonldjava.core.JSONLD ;
+import com.github.jsonldjava.core.JSONLDProcessingError ;
+import com.github.jsonldjava.core.JSONLDTripleCallback ;
+import com.github.jsonldjava.utils.JSONUtils ;
+import com.hp.hpl.jena.datatypes.RDFDatatype ;
+import com.hp.hpl.jena.graph.Node ;
+import com.hp.hpl.jena.graph.NodeFactory ;
+import com.hp.hpl.jena.graph.Triple ;
+import com.hp.hpl.jena.sparql.util.Context ;
+
+import static com.github.jsonldjava.core.JSONLDConsts.*;
+import static com.github.jsonldjava.core.JSONLDUtils.*;
 
 public class JsonLDReader implements ReaderRIOT
 {
@@ -46,24 +52,58 @@ public class JsonLDReader implements ReaderRIOT
             Object jsonObject = JSONUtils.fromInputStream(in);
             JSONLDTripleCallback callback = new JSONLDTripleCallback() {
 
-                @Override
-                public void triple(String s, String p, String o, String graph)
-                {
-                    Node js = createURI(s) ;
-                    Node jp = createURI(p) ;
-                    Node jo = createURI(o) ;
-                    Triple t = Triple.create(js, jp, jo) ;
-                    output.triple(t) ;
-                }
+//                @Override
+//                public void triple(String s, String p, String o, String graph)
+//                {
+//                    Node js = createURI(s) ;
+//                    Node jp = createURI(p) ;
+//                    Node jo = createURI(o) ;
+//                    Triple t = Triple.create(js, jp, jo) ;
+//                    output.triple(t) ;
+//                }
+//
+//                @Override
+//                public void triple(String s, String p, String value, String datatype, String language, String graph)
+//                {
+//                    Node js = createURI(s) ;
+//                    Node jp = createURI(p) ;
+//                    Node jo = createLiteral(value,  datatype, language) ;
+//                    Triple t = Triple.create(js, jp, jo) ;
+//                    output.triple(t) ;
+//                }
 
                 @Override
-                public void triple(String s, String p, String value, String datatype, String language, String graph)
-                {
-                    Node js = createURI(s) ;
-                    Node jp = createURI(p) ;
-                    Node jo = createLiteral(value,  datatype, language) ;
-                    Triple t = Triple.create(js, jp, jo) ;
-                    output.triple(t) ;
+                public Object call(Map<String, Object> dataset) {
+                    for ( String gn : dataset.keySet() )
+                    {
+                        Object x = dataset.get(gn) ;
+                        if ( "@default".equals(gn) )
+                        {
+                            List<Map<String, Object>> triples = (List<Map<String, Object>>)x ; 
+                            for ( Map<String, Object> t : triples )
+                            {
+                                    Node s = createNode(t, "subject") ;
+                                    Node p = createNode(t, "predicate") ;
+                                    Node o = createNode(t, "object") ;
+                                    Triple triple = Triple.create(s,p,o) ;
+                                    output.triple(triple) ;
+                            }
+                        } else {
+                            List<Map<String, Object>> quads = (List<Map<String, Object>>)x ;
+                            Node g = NodeFactory.createURI(gn) ;    // Bnodes?
+                            for ( Map<String, Object> q : quads )
+                            {
+                                    
+                                    Node s = createNode(q, "subject") ;
+                                    Node p = createNode(q, "subject") ;
+                                    Node o = createNode(q, "object") ;
+                                    output.triple(Triple.create(s,p,o)) ;
+                            }
+                            
+                        }
+                        
+                    }
+                    return null ;
                 }} ;
 
                 JSONLD.toRDF(jsonObject, callback) ;
@@ -78,22 +118,70 @@ public class JsonLDReader implements ReaderRIOT
     
     private LabelToNode labels =  LabelToNode.createScopeByDocument() ;
     
+    public static String LITERAL = "literal";
+    public static String BLANK_NODE = "blank node";
+    public static String IRI = "IRI";
+    
+    private Node createNode(Map<String, Object> tripleMap, String key)
+    {
+        Map<String, Object> x = (Map<String, Object>)(tripleMap.get(key)) ;
+        return createNode(x) ;
+    }
+    // See RDFParser
+    private Node createNode(Map<String, Object> map)
+    {
+        String type = (String)map.get("type") ;
+        String lex = (String)map.get("value") ;
+        if ( type.equals(IRI) )
+          return NodeFactory.createURI(lex) ; 
+        else if ( type.equals(BLANK_NODE) )
+            return labels.get(null,  lex) ;
+        else if ( type.equals(LITERAL) )
+        {
+            String lang = (String)map.get("language") ;
+            String datatype = (String)map.get("datatype") ;
+            if ( lang == null && datatype == null )
+                return NodeFactory.createLiteral(lex) ;
+            if ( lang != null )
+                return NodeFactory.createLiteral(lex, lang, null) ;
+            RDFDatatype dt = NodeFactory.getType(datatype) ;
+            return NodeFactory.createLiteral(lex, dt) ;
+        }
+        else
+            throw new InternalErrorException("Node is not a IRI, bNode or a literal: "+type) ;
+//        /*
+//     *  "value" : The value of the node.
+//     *            "subject" can be an IRI or blank node id.
+//     *            "predicate" should only ever be an IRI
+//     *            "object" can be and IRI or blank node id, or a literal value (represented as a string) 
+//     *  "type" : "IRI" if the value is an IRI or "blank node" if the value is a blank node.
+//     *           "object" can also be "literal" in the case of literals.
+//     * The value of "object" can  also contain the following optional key-value pairs:
+//     *  "language" : the language value of a string literal
+//     *  "datatype" : the datatype of the literal. (if not set will default to XSD:string, if set to null, null will be used).         */
+//        System.out.println(map.get("value")) ;
+//        System.out.println(map.get("type")) ;
+//        System.out.println(map.get("language")) ;
+//        System.out.println(map.get("datatype")) ;
+//        return null ;
+    }
+    
     private Node createURI(String str)
     {
         if ( str.startsWith("_:") )
             return labels.get(null, str) ;
         else
-            return Node.createURI(str) ;
+            return NodeFactory.createURI(str) ;
     }
     
     private Node createLiteral(String lex, String datatype, String lang)
     {
         if ( lang == null && datatype == null )
-            return Node.createLiteral(lex) ;
+            return NodeFactory.createLiteral(lex) ;
         if ( lang != null )
-            return Node.createLiteral(lex, lang, null) ;
-        RDFDatatype dt = Node.getType(datatype) ;
-        return Node.createLiteral(lex, dt) ;
+            return NodeFactory.createLiteral(lex, lang, null) ;
+        RDFDatatype dt = NodeFactory.getType(datatype) ;
+        return NodeFactory.createLiteral(lex, dt) ;
     }
 
 }

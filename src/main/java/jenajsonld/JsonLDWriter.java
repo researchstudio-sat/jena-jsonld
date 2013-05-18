@@ -22,27 +22,30 @@ import java.io.IOException ;
 import java.io.OutputStream ;
 import java.io.OutputStreamWriter ;
 import java.io.Writer ;
-import java.util.Iterator ;
-import java.util.Map ;
+import java.util.* ;
 
 import org.apache.jena.atlas.io.IO ;
 import org.apache.jena.atlas.lib.Chars ;
 import org.apache.jena.atlas.logging.Log ;
 import org.apache.jena.riot.Lang ;
-import org.apache.jena.riot.out.NodeToLabel ;
+import org.apache.jena.riot.RDFFormat ;
 import org.apache.jena.riot.system.PrefixMap ;
-import riot.RDFFormat ;
-import riot.writer.WriterDatasetRIOTBase ;
+import org.apache.jena.riot.writer.WriterDatasetRIOTBase ;
 
+import com.fasterxml.jackson.core.JsonGenerationException ;
+import com.fasterxml.jackson.databind.JsonMappingException ;
+import com.github.jsonldjava.core.JSONLD ;
+import com.github.jsonldjava.core.JSONLDProcessingError ;
+import com.github.jsonldjava.core.Options ;
+import com.github.jsonldjava.core.RDFDatasetUtils ;
+import com.github.jsonldjava.utils.JSONUtils ;
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype ;
+import com.hp.hpl.jena.graph.Graph ;
 import com.hp.hpl.jena.graph.Node ;
+import com.hp.hpl.jena.graph.Triple ;
 import com.hp.hpl.jena.sparql.core.DatasetGraph ;
-import com.hp.hpl.jena.sparql.core.Quad ;
 import com.hp.hpl.jena.sparql.util.Context ;
-
-import de.dfki.km.json.JSONUtils ;
-import de.dfki.km.json.jsonld.JSONLD ;
-import de.dfki.km.json.jsonld.JSONLDProcessingError ;
-import de.dfki.km.json.jsonld.JSONLDSerializer ;
+import com.hp.hpl.jena.vocabulary.RDF ;
 
 class JsonLDWriter extends WriterDatasetRIOTBase
 {
@@ -61,12 +64,10 @@ class JsonLDWriter extends WriterDatasetRIOTBase
     @Override
     public void write(Writer out, DatasetGraph dataset, PrefixMap prefixMap, String baseURI, Context context)
     {
-        String str = serialize(dataset, prefixMap, baseURI) ;
-        try { out.write(str) ; out.flush() ; }
-        catch (IOException e) { IO.exception(e) ; }
+        serialize(out, dataset, prefixMap, baseURI) ;
     }
-    
-    private boolean isPretty() { return RDFFormat.wvPretty.equals(format.getVariant()) ; }
+
+    private boolean isPretty() { return RDFFormat.PRETTY.equals(format.getVariant()) ; }
 
     @Override
     public void write(OutputStream out, DatasetGraph dataset, PrefixMap prefixMap, String baseURI, Context context)
@@ -75,81 +76,103 @@ class JsonLDWriter extends WriterDatasetRIOTBase
         write(w, dataset, prefixMap, baseURI, context) ;
         IO.flush(w) ;
     }
-    
-    private String serialize(DatasetGraph dataset, PrefixMap prefixMap, String baseURI)
+
+    private void serialize(Writer out, DatasetGraph dataset, PrefixMap prefixMap, String baseURI)
     {
-        JSONLDSerializer serializer = new DatasetJSONLDSerializer() ;
-        try
-        {
-            Object obj = JSONLD.fromRDF(dataset, serializer);
-            if ( isPretty() )
-                return JSONUtils.toPrettyString(obj) ;
-            else
-                // Flat.
-                return JSONUtils.toString(obj) ;
-        } catch (JSONLDProcessingError e)
-        {
+        try {
+            Object obj = JSONLD.fromRDF(dataset, new THING()) ;
+            // Options.
+            //JSONUtils.write(out, obj) ;
+            JSONUtils.writePrettyPrint(out, obj);
+//            } else {
+//            
+//            }
+        } catch (JSONLDProcessingError e) {
             e.printStackTrace();
-            return null ;
+        } catch (JsonGenerationException e) {
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    static class DatasetJSONLDSerializer extends JSONLDSerializer
-    {
+    public class THING implements com.github.jsonldjava.core.RDFParser {
+
         @Override
-        public void parse(Object object) throws JSONLDProcessingError
-        {
-            if ( ! ( object instanceof DatasetGraph ) )
+        public Map<String, Object> parse(Object object) throws JSONLDProcessingError {
+            Map<String,Object> result = RDFDatasetUtils.getInitialRDFDatasetResult();
+            if ( object instanceof DatasetGraph )
             {
-                Log.fatal("JsonLDWriter", "Unrecognized: "+object.getClass()) ;
-                return ;
-            }
+                DatasetGraph dsg = (DatasetGraph)object ;
 
-            DatasetGraph dsg = (DatasetGraph)object ;
-            // add the prefixes to the context
-            Map<String, String> nsPrefixMap = dsg.getDefaultGraph().getPrefixMapping().getNsPrefixMap() ;
-            for (String prefix : nsPrefixMap.keySet()) {
-                setPrefix(nsPrefixMap.get(prefix), prefix);
-            }
-
-            Iterator<Quad> iter = dsg.find() ;
-            for ( ; iter.hasNext() ; )
-            {
-                Quad quad = iter.next();
-                importQuad(quad) ;
-            }
-        }
-
-        public void importQuad(Quad quad) {
-            String sStr = resource2String(quad.getSubject()) ;
-            String pStr = resource2String(quad.getPredicate()) ;
-            String gStr = (quad.isDefaultGraph() ? "" : resource2String(quad.getGraph())) ;
-            if ( quad.getObject().isLiteral() )
-            {
-                Node o = quad.getObject() ;
-                String value = o.getLiteralLexicalForm() ;
-                String language = null ;
-                String dt = null ;
-                if ( o.getLiteralLanguage().equals("") )
-                    dt = o.getLiteralDatatypeURI() ;
-                else
-                    language = o.getLiteralLanguage() ;
-                triple(sStr, pStr, value, dt, language, gStr) ;
-            }
+                if ( ! result.containsKey("@default") )
+                    result.put("@default", new ArrayList<Object>()) ;
+                List<Object> triples =  (List<Object>)result.get("@default") ;
+                Graph graph = dsg.getDefaultGraph() ;
+                Iterator<Triple> iter = graph.find(null, null, null) ;
+                for ( ; iter.hasNext() ; )
+                {
+                    Triple t = iter.next() ;
+                    Map<String, Object> tx = encode(t) ;
+                    triples.add(tx) ;
+                }
+            }                
             else
-            {  
-                String oStr = resource2String(quad.getObject()) ;
-                triple(sStr, pStr, oStr, gStr) ;
+                Log.warn(THING.class, "unknown") ;
+            return result ;
+        } }
 
-            }
-        }
+    private Map<String, Object> encode(Triple t) {
+        Map<String, Object> map = new HashMap<String, Object>() ;
+        encode(map, "subject", t.getSubject()) ;
+        encode(map, "predicate", t.getPredicate()) ;
+        encode(map, "object", t.getObject()) ;
+        return map ;
+    }
 
-        NodeToLabel labels = NodeToLabel.createScopeByDocument() ;
-        String resource2String(Node node)
+    private void encode(Map<String, Object> map, String string, Node node)
+    {
+        map.put(string, encode(node)) ;
+    }
+
+    private Map<String, Object> encode(Node n) {
+        Map<String, Object> map = new HashMap<String, Object>() ;
+        if ( n.isURI() )
         {
-            if ( node.isURI()) return node.getURI() ;
-            if ( node.isBlank()) return labels.get(null, node) ;
-            throw new IllegalStateException() ; 
+            map.put("type", JsonLDReader.IRI) ;
+            map.put("value", n.getURI()) ;
+            return map ;
         }
+        if ( n.isBlank() )
+        {
+            map.put("type", JsonLDReader.BLANK_NODE) ;
+            map.put("value", n.getBlankNodeLabel()) ;
+            return map ;    
+        }
+
+        if ( n.isLiteral() )
+        {
+            map.put("type", JsonLDReader.LITERAL) ;
+            map.put("value", n.getLiteralLexicalForm()) ;
+            String lang = n.getLiteralLanguage() ;
+            String dt = n.getLiteralDatatypeURI() ;
+            if (lang != null && lang.length()>0)
+            {
+                map.put("language", lang) ;
+                map.put("datatype", RDF.getURI()+"langString") ;
+                return map ;
+            }
+            if (dt == null )
+            {
+                map.put("datatype", XSDDatatype.XSDstring.getURI()) ;
+                return map ;
+            }
+            map.put("datatype", dt) ;
+            return map ;    
+        }
+        Log.warn(THING.class, "encode miss") ;
+        return null ;
     }
 }
