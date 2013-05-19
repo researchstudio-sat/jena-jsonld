@@ -28,6 +28,7 @@ import org.apache.jena.atlas.web.ContentType ;
 import org.apache.jena.riot.ReaderRIOT ;
 import org.apache.jena.riot.lang.LabelToNode ;
 import org.apache.jena.riot.system.StreamRDF ;
+import org.apache.jena.riot.system.SyntaxLabels ;
 
 import com.github.jsonldjava.core.JSONLD ;
 import com.github.jsonldjava.core.JSONLDProcessingError ;
@@ -51,26 +52,6 @@ public class JsonLDReader implements ReaderRIOT
         {
             Object jsonObject = JSONUtils.fromInputStream(in);
             JSONLDTripleCallback callback = new JSONLDTripleCallback() {
-
-//                @Override
-//                public void triple(String s, String p, String o, String graph)
-//                {
-//                    Node js = createURI(s) ;
-//                    Node jp = createURI(p) ;
-//                    Node jo = createURI(o) ;
-//                    Triple t = Triple.create(js, jp, jo) ;
-//                    output.triple(t) ;
-//                }
-//
-//                @Override
-//                public void triple(String s, String p, String value, String datatype, String language, String graph)
-//                {
-//                    Node js = createURI(s) ;
-//                    Node jp = createURI(p) ;
-//                    Node jo = createLiteral(value,  datatype, language) ;
-//                    Triple t = Triple.create(js, jp, jo) ;
-//                    output.triple(t) ;
-//                }
 
                 @Override
                 public Object call(Map<String, Object> dataset) {
@@ -116,7 +97,7 @@ public class JsonLDReader implements ReaderRIOT
         }
     }
     
-    private LabelToNode labels =  LabelToNode.createScopeByDocument() ;
+    private LabelToNode labels =  SyntaxLabels.createLabelToNode() ;
     
     public static String LITERAL = "literal";
     public static String BLANK_NODE = "blank node";

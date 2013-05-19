@@ -29,7 +29,9 @@ import org.apache.jena.atlas.lib.Chars ;
 import org.apache.jena.atlas.logging.Log ;
 import org.apache.jena.riot.Lang ;
 import org.apache.jena.riot.RDFFormat ;
+import org.apache.jena.riot.out.NodeToLabel ;
 import org.apache.jena.riot.system.PrefixMap ;
+import org.apache.jena.riot.system.SyntaxLabels ;
 import org.apache.jena.riot.writer.WriterDatasetRIOTBase ;
 
 import com.fasterxml.jackson.core.JsonGenerationException ;
@@ -45,6 +47,7 @@ import com.hp.hpl.jena.graph.Node ;
 import com.hp.hpl.jena.graph.Triple ;
 import com.hp.hpl.jena.sparql.core.DatasetGraph ;
 import com.hp.hpl.jena.sparql.util.Context ;
+import com.hp.hpl.jena.sparql.util.FmtUtils ;
 import com.hp.hpl.jena.vocabulary.RDF ;
 
 class JsonLDWriter extends WriterDatasetRIOTBase
@@ -82,7 +85,7 @@ class JsonLDWriter extends WriterDatasetRIOTBase
         try {
             Object obj = JSONLD.fromRDF(dataset, new THING()) ;
             // Options.
-            //JSONUtils.write(out, obj) ;
+//            JSONUtils.write(out, obj) ;
             JSONUtils.writePrettyPrint(out, obj);
 //            } else {
 //            
@@ -115,6 +118,7 @@ class JsonLDWriter extends WriterDatasetRIOTBase
                 for ( ; iter.hasNext() ; )
                 {
                     Triple t = iter.next() ;
+                    //System.out.println("Serializing "+FmtUtils.stringForTriple(t)) ;
                     Map<String, Object> tx = encode(t) ;
                     triples.add(tx) ;
                 }
@@ -129,6 +133,7 @@ class JsonLDWriter extends WriterDatasetRIOTBase
         encode(map, "subject", t.getSubject()) ;
         encode(map, "predicate", t.getPredicate()) ;
         encode(map, "object", t.getObject()) ;
+        //System.out.println(map) ;
         return map ;
     }
 
@@ -137,7 +142,11 @@ class JsonLDWriter extends WriterDatasetRIOTBase
         map.put(string, encode(node)) ;
     }
 
+    private NodeToLabel labels = SyntaxLabels.createNodeToLabel() ;
+    
+    
     private Map<String, Object> encode(Node n) {
+        
         Map<String, Object> map = new HashMap<String, Object>() ;
         if ( n.isURI() )
         {
@@ -148,7 +157,9 @@ class JsonLDWriter extends WriterDatasetRIOTBase
         if ( n.isBlank() )
         {
             map.put("type", JsonLDReader.BLANK_NODE) ;
-            map.put("value", n.getBlankNodeLabel()) ;
+            String v = "_:"+n.getBlankNodeLabel() ; 
+            //v = labels.get(null, n) ;
+            map.put("value", v);
             return map ;    
         }
 

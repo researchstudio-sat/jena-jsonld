@@ -44,6 +44,12 @@ public class MainJsonLD
     {
         JenaJSONLD.init() ;
         
+        {
+        Model model = RDFDataMgr.loadModel("D.ttl") ;
+        RDFDataMgr.write(System.out, model, JSONLD) ;
+        System.exit(0) ;
+        }
+        
         rtRJR("D.ttl") ;
 //        rtRJR("data.jsonld") ;
 //        
