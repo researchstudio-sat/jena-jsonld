@@ -1,7 +1,7 @@
 *.class
 target
 classes
-
+J
 # Package Files #
 *.jar
 *.war

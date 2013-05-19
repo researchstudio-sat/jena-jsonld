@@ -27,11 +27,10 @@ import jenajsonld.JenaJSONLD ;
 import org.apache.jena.atlas.logging.Log ;
 import org.apache.jena.riot.Lang ;
 import org.apache.jena.riot.RDFDataMgr ;
-import org.apache.jena.riot.lang.PrintingStreamRDF ;
-import org.apache.jena.riot.system.StreamRDF ;
 import org.slf4j.Logger ;
 import org.slf4j.LoggerFactory ;
 
+import com.hp.hpl.jena.query.Dataset ;
 import com.hp.hpl.jena.rdf.model.Model ;
 import com.hp.hpl.jena.rdf.model.ModelFactory ;
 
@@ -45,9 +44,9 @@ public class MainJsonLD
         JenaJSONLD.init() ;
         
         {
-        Model model = RDFDataMgr.loadModel("D.ttl") ;
-        RDFDataMgr.write(System.out, model, JSONLD) ;
-        System.exit(0) ;
+            Dataset ds = RDFDataMgr.loadDataset("D.trig") ;
+            RDFDataMgr.write(System.out, ds, JSONLD) ;
+            System.exit(0) ;
         }
         
         rtRJR("D.ttl") ;

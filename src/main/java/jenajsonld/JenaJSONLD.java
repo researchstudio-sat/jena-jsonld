@@ -27,6 +27,8 @@ import com.hp.hpl.jena.rdf.model.impl.IO_Ctl ;
 
 public class JenaJSONLD
 {
+    //public static 
+    
     public static Lang JSONLD = LangBuilder.create("JSON-LD", "application/ld+json")
         //.addAltNames("RDF/JSON-LD")
         .addFileExtensions("jsonld").build() ;

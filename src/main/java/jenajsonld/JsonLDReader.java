@@ -40,9 +40,6 @@ import com.hp.hpl.jena.graph.NodeFactory ;
 import com.hp.hpl.jena.graph.Triple ;
 import com.hp.hpl.jena.sparql.util.Context ;
 
-import static com.github.jsonldjava.core.JSONLDConsts.*;
-import static com.github.jsonldjava.core.JSONLDUtils.*;
-
 public class JsonLDReader implements ReaderRIOT
 {
     @Override
@@ -60,6 +57,7 @@ public class JsonLDReader implements ReaderRIOT
                         Object x = dataset.get(gn) ;
                         if ( "@default".equals(gn) )
                         {
+                            @SuppressWarnings("unchecked")
                             List<Map<String, Object>> triples = (List<Map<String, Object>>)x ; 
                             for ( Map<String, Object> t : triples )
                             {
@@ -70,11 +68,11 @@ public class JsonLDReader implements ReaderRIOT
                                     output.triple(triple) ;
                             }
                         } else {
+                            @SuppressWarnings("unchecked")
                             List<Map<String, Object>> quads = (List<Map<String, Object>>)x ;
                             Node g = NodeFactory.createURI(gn) ;    // Bnodes?
                             for ( Map<String, Object> q : quads )
                             {
-                                    
                                     Node s = createNode(q, "subject") ;
                                     Node p = createNode(q, "subject") ;
                                     Node o = createNode(q, "object") ;
@@ -105,6 +103,7 @@ public class JsonLDReader implements ReaderRIOT
     
     private Node createNode(Map<String, Object> tripleMap, String key)
     {
+        @SuppressWarnings("unchecked")
         Map<String, Object> x = (Map<String, Object>)(tripleMap.get(key)) ;
         return createNode(x) ;
     }
