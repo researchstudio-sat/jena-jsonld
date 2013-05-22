@@ -33,6 +33,7 @@ import org.apache.jena.riot.system.SyntaxLabels ;
 import com.github.jsonldjava.core.JSONLD ;
 import com.github.jsonldjava.core.JSONLDProcessingError ;
 import com.github.jsonldjava.core.JSONLDTripleCallback ;
+import com.github.jsonldjava.core.RDFDataset ;
 import com.github.jsonldjava.utils.JSONUtils ;
 import com.hp.hpl.jena.datatypes.RDFDatatype ;
 import com.hp.hpl.jena.graph.Node ;
@@ -51,7 +52,8 @@ public class JsonLDReader implements ReaderRIOT
             JSONLDTripleCallback callback = new JSONLDTripleCallback() {
 
                 @Override
-                public Object call(Map<String, Object> dataset) {
+                //public Object call(Map<String, Object> dataset) {
+                public Object call(RDFDataset dataset) {
                     for ( String gn : dataset.keySet() )
                     {
                         Object x = dataset.get(gn) ;

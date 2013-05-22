@@ -31,6 +31,7 @@ import org.slf4j.Logger ;
 import org.slf4j.LoggerFactory ;
 
 import com.hp.hpl.jena.query.Dataset ;
+import com.hp.hpl.jena.query.DatasetFactory ;
 import com.hp.hpl.jena.rdf.model.Model ;
 import com.hp.hpl.jena.rdf.model.ModelFactory ;
 
@@ -43,13 +44,18 @@ public class MainJsonLD
     {
         JenaJSONLD.init() ;
         
-        {
-            Dataset ds = RDFDataMgr.loadDataset("D.trig") ;
-            RDFDataMgr.write(System.out, ds, JSONLD) ;
-            System.exit(0) ;
-        }
+//        {
+//            Dataset ds = RDFDataMgr.loadDataset("D.trig") ;
+//            RDFDataMgr.write(System.out, ds, JSONLD) ;
+//            
+////            ByteArrayOutputStream sout = new ByteArrayOutputStream() ;
+////            RDFDataMgr.write(System.out, ds, JSONLD) ;
+//            
+//            System.exit(0) ;
+//        }
         
         rtRJR("D.ttl") ;
+        rtRJR("D.trig") ;
 //        rtRJR("data.jsonld") ;
 //        
 //        rtRJR2("D.ttl") ;
@@ -75,15 +81,16 @@ public class MainJsonLD
     static void rtRJR(String filename)
     {
         System.out.println("## ---- : "+filename) ;
-        Model model = RDFDataMgr.loadModel(filename) ;
+        Dataset ds = RDFDataMgr.loadDataset(filename) ;
         
         ByteArrayOutputStream out = new ByteArrayOutputStream() ;
-        RDFDataMgr.write(out, model, JSONLD) ;
-        RDFDataMgr.write(System.out, model, JSONLD) ;
+        RDFDataMgr.write(out, ds, JSONLD) ;
+        RDFDataMgr.write(System.out, ds, JSONLD) ;
+        System.out.println() ;
         ByteArrayInputStream r = new ByteArrayInputStream(out.toByteArray()) ;
         
-        Model model2 = ModelFactory.createDefaultModel() ;
-        RDFDataMgr.read(model2, r, null, JSONLD) ;
+        Dataset ds2 = DatasetFactory.createMem() ;
+        RDFDataMgr.read(ds2, r, null, JSONLD) ;
 //        if ( ! model.isIsomorphicWith(model2) ) 
 //            System.out.println("## ---- DIFFERENT") ;
     }
