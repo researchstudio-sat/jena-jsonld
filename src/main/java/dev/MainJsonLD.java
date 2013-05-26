@@ -25,7 +25,6 @@ import java.io.ByteArrayOutputStream ;
 
 import jenajsonld.JenaJSONLD ;
 import org.apache.jena.atlas.logging.Log ;
-import org.apache.jena.riot.Lang ;
 import org.apache.jena.riot.RDFDataMgr ;
 import org.slf4j.Logger ;
 import org.slf4j.LoggerFactory ;
@@ -43,39 +42,10 @@ public class MainJsonLD
     public static void main(String[] args)
     {
         JenaJSONLD.init() ;
+        String DIR = "testing/RIOT/jsonld/" ; 
         
-//        {
-//            Dataset ds = RDFDataMgr.loadDataset("D.trig") ;
-//            RDFDataMgr.write(System.out, ds, JSONLD) ;
-//            
-////            ByteArrayOutputStream sout = new ByteArrayOutputStream() ;
-////            RDFDataMgr.write(System.out, ds, JSONLD) ;
-//            
-//            System.exit(0) ;
-//        }
-        
-        rtRJR("D.ttl") ;
-        rtRJR("D.trig") ;
-//        rtRJR("data.jsonld") ;
-//        
-//        rtRJR2("D.ttl") ;
-//        rtRJR2("data.jsonld") ;
-//        System.out.println("DONE") ;
-        System.exit(0) ;
-
-        String filename = "data.jsonld" ;
-        
-//        StreamRDF stream = new PrintingStreamRDF(log) ;
-//        RDFDataMgr.parse(stream, filename) ;
-        
-        Model model = RDFDataMgr.loadModel(filename) ;
-        RDFDataMgr.write(System.out, model, Lang.TURTLE) ;
-        //RDFDataMgr.write(System.out, model, JSONLD) ;
-        
-        System.out.print("\n## -------------\n\n") ;
-        
-        model.write(System.out, "JSON-LD") ;
-        System.out.print("\n## -------------\n\n") ;
+        Dataset ds = RDFDataMgr.loadDataset("D.trig") ;
+        RDFDataMgr.write(System.out, ds, JSONLD) ;
     }
     
     static void rtRJR(String filename)

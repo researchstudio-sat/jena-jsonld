@@ -18,16 +18,18 @@
 
 package jenajsonld;
 
+import org.junit.BeforeClass ;
 import org.junit.runner.RunWith ;
 import org.junit.runners.Suite ;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
     TestJenaSystem.class
-    , TestJJLDReader.class
-    , TestJJLDWriter.class
+    , TestJJLDReadWrite.class
 })
 
 public class TS_JenaJsonLD
-{ }
+{ 
+    @BeforeClass static public void setupClass() { JenaJSONLD.init(); }  
+}
 
