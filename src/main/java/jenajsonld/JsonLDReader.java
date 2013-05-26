@@ -39,6 +39,7 @@ import com.hp.hpl.jena.datatypes.RDFDatatype ;
 import com.hp.hpl.jena.graph.Node ;
 import com.hp.hpl.jena.graph.NodeFactory ;
 import com.hp.hpl.jena.graph.Triple ;
+import com.hp.hpl.jena.sparql.core.Quad ;
 import com.hp.hpl.jena.sparql.util.Context ;
 
 public class JsonLDReader implements ReaderRIOT
@@ -76,9 +77,9 @@ public class JsonLDReader implements ReaderRIOT
                             for ( Map<String, Object> q : quads )
                             {
                                     Node s = createNode(q, "subject") ;
-                                    Node p = createNode(q, "subject") ;
+                                    Node p = createNode(q, "predicate") ;
                                     Node o = createNode(q, "object") ;
-                                    output.triple(Triple.create(s,p,o)) ;
+                                    output.quad(Quad.create(g,s,p,o)) ;
                             }
                             
                         }
