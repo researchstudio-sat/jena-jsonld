@@ -46,6 +46,9 @@ public class MainJsonLD
         
         Dataset ds = RDFDataMgr.loadDataset("D.trig") ;
         RDFDataMgr.write(System.out, ds, JSONLD) ;
+        System.out.println("-------------------") ;
+        Model m = RDFDataMgr.loadModel("D.ttl") ;
+        RDFDataMgr.write(System.out, m, JSONLD) ;
     }
     
     static void rtRJR(String filename)
