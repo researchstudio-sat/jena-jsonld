@@ -22,9 +22,13 @@ import java.io.IOException ;
 import java.io.OutputStream ;
 import java.io.OutputStreamWriter ;
 import java.io.Writer ;
+import java.util.LinkedHashMap ;
+import java.util.Map ;
+import java.util.Map.Entry ;
 
 import org.apache.jena.atlas.io.IO ;
 import org.apache.jena.atlas.lib.Chars ;
+import org.apache.jena.iri.IRI ;
 import org.apache.jena.riot.Lang ;
 import org.apache.jena.riot.RDFFormat ;
 import org.apache.jena.riot.system.PrefixMap ;
@@ -34,6 +38,7 @@ import com.fasterxml.jackson.core.JsonGenerationException ;
 import com.fasterxml.jackson.databind.JsonMappingException ;
 import com.github.jsonldjava.core.JSONLD ;
 import com.github.jsonldjava.core.JSONLDProcessingError ;
+import com.github.jsonldjava.core.Options ;
 import com.github.jsonldjava.utils.JSONUtils ;
 import com.hp.hpl.jena.sparql.core.DatasetGraph ;
 import com.hp.hpl.jena.sparql.util.Context ;
@@ -70,25 +75,46 @@ class JsonLDWriter extends WriterDatasetRIOTBase
 
     private void serialize(Writer writer, DatasetGraph dataset, PrefixMap prefixMap, String baseURI)
     {
+        
+        //Map<String, String> pmap = prefixMap.getMappingCopyStr() ;
+        Map<String, IRI> pmap = prefixMap.getMapping() ;
+        Map<String, Object> pmap2 = new LinkedHashMap<String, Object>();
+        for ( Entry<String, IRI> e : pmap.entrySet()) {
+            pmap2.put(e.getKey(),  e.getValue().toString()) ;
+        }
+        
         try {
             Object obj = JSONLD.fromRDF(dataset, new JenaRDF2JSONLD()) ;
 
-//            // From context
-//            Options opts = new Options();
-//            opts.addBlankNodeIDs = false ;
-//            opts.useRdfType = true ;
-//            opts.useNativeTypes = true ;
-//            opts.skipExpansion = true ;
-//            
-//            // Expansion.
-//            obj = JSONLD.expand(obj, opts);
-//
-//            // TODO: Framing
-//            // TODO: Simplication
-//
-//            //output = JSONLD.frame(out, (Map<String, Object>)??, opts) ;
-//            
-//            obj = JSONLD.simplify(obj, opts);
+            // From context
+            Options opts = new Options();
+            
+            //opts.optimizeCtx = pmap2; // ?? Does not appear to be used by jsonld-java  
+            opts.addBlankNodeIDs = false ;
+            opts.useRdfType = true ;
+            opts.useNativeTypes = true ;
+            opts.skipExpansion = false ;
+            opts.compactArrays = true ;
+            opts.keepFreeFloatingNodes = false ;
+            
+            //AT A MINIMUM
+            if ( true )
+                obj = JSONLD.simplify(obj, opts);
+            else {
+                // Unclear as to the way to set better printing.
+                if ( false )
+                    obj = JSONLD.compact(obj, pmap2) ;
+                
+                if ( false )
+                    obj = JSONLD.expand(obj, opts);
+                Map<String, Object> inframe = new LinkedHashMap<String, Object>() ;
+                if ( false )
+                    obj = JSONLD.frame(obj, inframe, opts);
+
+                if ( false )
+                    // This seems to undo work done in earlier steps.
+                    obj = JSONLD.simplify(obj, opts);
+            }
             
             if ( isPretty() )
                 JSONUtils.writePrettyPrint(writer, obj);

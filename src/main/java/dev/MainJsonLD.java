@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream ;
 
 import jenajsonld.JenaJSONLD ;
 import org.apache.jena.atlas.logging.Log ;
+import org.apache.jena.riot.Lang ;
 import org.apache.jena.riot.RDFDataMgr ;
 import org.slf4j.Logger ;
 import org.slf4j.LoggerFactory ;
@@ -33,6 +34,7 @@ import com.hp.hpl.jena.query.Dataset ;
 import com.hp.hpl.jena.query.DatasetFactory ;
 import com.hp.hpl.jena.rdf.model.Model ;
 import com.hp.hpl.jena.rdf.model.ModelFactory ;
+import com.hp.hpl.jena.vocabulary.RDF ;
 
 public class MainJsonLD
 {
@@ -42,8 +44,22 @@ public class MainJsonLD
     public static void main(String[] args)
     {
         JenaJSONLD.init() ;
-        String DIR = "testing/RIOT/jsonld/" ; 
         
+        {
+            Model m = RDFDataMgr.loadModel("D.ttl") ;
+            RDFDataMgr.write(System.out, m, JSONLD) ;
+            System.exit(0) ;
+        }
+
+        {
+            Model m = RDFDataMgr.loadModel("/home/afs/tmp/D.jsonld") ;
+            m.setNsPrefix("", "http://example/") ;
+            m.setNsPrefix("rdf", RDF.getURI()) ;
+            RDFDataMgr.write(System.out, m, Lang.TTL) ;
+            System.exit(0) ;
+        }
+
+        String DIR = "testing/RIOT/jsonld/" ;
         Dataset ds = RDFDataMgr.loadDataset("D.trig") ;
         RDFDataMgr.write(System.out, ds, JSONLD) ;
         System.out.println("-------------------") ;

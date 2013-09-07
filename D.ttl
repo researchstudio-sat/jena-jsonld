@@ -1,3 +1,6 @@
 @prefix : <http://example/> .
+@prefix ns: <http://example/ns#> .
 
- :s :p :o . 
+:s a ns:T .
+ :s :p :o1, :o2, :o3 ;
+    ns:q 123 .
