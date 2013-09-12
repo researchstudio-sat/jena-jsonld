@@ -22,11 +22,12 @@ import java.io.IOException ;
 import java.io.OutputStream ;
 import java.io.OutputStreamWriter ;
 import java.io.Writer ;
-import java.util.LinkedHashMap ;
-import java.util.Map ;
+import java.util.* ;
 import java.util.Map.Entry ;
 
 import org.apache.jena.atlas.io.IO ;
+import org.apache.jena.atlas.iterator.Action ;
+import org.apache.jena.atlas.iterator.Iter ;
 import org.apache.jena.atlas.lib.Chars ;
 import org.apache.jena.iri.IRI ;
 import org.apache.jena.riot.Lang ;
@@ -40,8 +41,12 @@ import com.github.jsonldjava.core.JSONLD ;
 import com.github.jsonldjava.core.JSONLDProcessingError ;
 import com.github.jsonldjava.core.Options ;
 import com.github.jsonldjava.utils.JSONUtils ;
+import com.hp.hpl.jena.graph.Graph ;
+import com.hp.hpl.jena.graph.Node ;
+import com.hp.hpl.jena.graph.Triple ;
 import com.hp.hpl.jena.sparql.core.DatasetGraph ;
 import com.hp.hpl.jena.sparql.util.Context ;
+import com.hp.hpl.jena.vocabulary.RDF ;
 
 class JsonLDWriter extends WriterDatasetRIOTBase
 {
@@ -75,46 +80,30 @@ class JsonLDWriter extends WriterDatasetRIOTBase
 
     private void serialize(Writer writer, DatasetGraph dataset, PrefixMap prefixMap, String baseURI)
     {
-        
-        //Map<String, String> pmap = prefixMap.getMappingCopyStr() ;
-        Map<String, IRI> pmap = prefixMap.getMapping() ;
-        Map<String, Object> pmap2 = new LinkedHashMap<String, Object>();
-        for ( Entry<String, IRI> e : pmap.entrySet()) {
-            pmap2.put(e.getKey(),  e.getValue().toString()) ;
-        }
+        final Map<String, Object> ctx = new LinkedHashMap<String, Object>();
+        addProperties(ctx, dataset.getDefaultGraph()) ;
+        addPrefixes(ctx, prefixMap) ; 
         
         try {
             Object obj = JSONLD.fromRDF(dataset, new JenaRDF2JSONLD()) ;
-
-            // From context
             Options opts = new Options();
-            
-            //opts.optimizeCtx = pmap2; // ?? Does not appear to be used by jsonld-java  
+            opts.graph =  false ;
             opts.addBlankNodeIDs = false ;
             opts.useRdfType = true ;
             opts.useNativeTypes = true ;
             opts.skipExpansion = false ;
             opts.compactArrays = true ;
             opts.keepFreeFloatingNodes = false ;
+            Map<String, Object> localCtx = new HashMap<>() ;
+            localCtx.put("@context", ctx);
+            
             
             //AT A MINIMUM
-            if ( true )
+            if ( false )
                 obj = JSONLD.simplify(obj, opts);
-            else {
+            else
                 // Unclear as to the way to set better printing.
-                if ( false )
-                    obj = JSONLD.compact(obj, pmap2) ;
-                
-                if ( false )
-                    obj = JSONLD.expand(obj, opts);
-                Map<String, Object> inframe = new LinkedHashMap<String, Object>() ;
-                if ( false )
-                    obj = JSONLD.frame(obj, inframe, opts);
-
-                if ( false )
-                    // This seems to undo work done in earlier steps.
-                    obj = JSONLD.simplify(obj, opts);
-            }
+                obj = JSONLD.compact(obj, localCtx) ;
             
             if ( isPretty() )
                 JSONUtils.writePrettyPrint(writer, obj);
@@ -129,5 +118,45 @@ class JsonLDWriter extends WriterDatasetRIOTBase
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void addPrefixes(Map<String, Object> ctx, PrefixMap prefixMap) {
+        Map<String, IRI> pmap = prefixMap.getMapping() ;
+        for ( Entry<String, IRI> e : pmap.entrySet()) {
+            ctx.put(e.getKey(),  e.getValue().toString()) ;
+        }
+        
+    }
+
+    private void addProperties(final Map<String, Object> ctx, Graph graph) {
+        // Add some properties directly so it becomes "localname": ....
+        final Set<String> dups = new HashSet<>() ;
+        Action<Triple> x = new Action<Triple>() {
+            @Override
+            public void apply(Triple item) {
+                Node p = item.getPredicate() ;
+                if ( p.equals( RDF.type.asNode() ))
+                    return ;
+                String x = p.getLocalName() ;
+                if ( dups.contains(x))
+                    return ;
+                
+                if ( ctx.containsKey(x) ) {
+                    // Check different URI
+//                    pmap2.remove(x) ;
+//                    dups.add(x) ;  
+                } else {
+                    Map<String, Object> x2 = new LinkedHashMap<String, Object>();
+                    x2.put("@id", p.getURI()) ;
+                    x2.put("@type", "@id") ;
+                    ctx.put(x, x2) ;
+                }
+            }
+        } ; 
+        
+        Iter.iter(graph.find(null, null, null)).apply(x);
+        
+        
+
     }
 }
