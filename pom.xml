@@ -13,7 +13,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.7</jdk.version>
     <targetJdk>${jdk.version}</targetJdk>
-    <jena.version>[2.11.0-SNAPSHOT,)</jena.version>
+    <jena.version>[2.11.1-SNAPSHOT,)</jena.version>
  </properties>
 
   <dependencies>
