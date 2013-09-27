@@ -4,7 +4,7 @@
 
   <groupId>org.apache.jena</groupId>
   <artifactId>jena-jsonld</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1-jena2.7.2-backport</version>
   <packaging>jar</packaging>
 
   <name>Jena JSON-LD</name>
@@ -13,32 +13,23 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.7</jdk.version>
     <targetJdk>${jdk.version}</targetJdk>
-    <jena.version>[2.11.1-SNAPSHOT,)</jena.version>
+    <jena-core.version>2.7.2</jena-core.version>
+    <jena-arq.version>2.9.2</jena-arq.version>
  </properties>
 
   <dependencies>
 
-    <dependency>
-      <groupId>org.apache.jena</groupId>
-      <artifactId>apache-jena-libs</artifactId>
-      <version>${jena.version}</version>
-      <type>pom</type>
-    </dependency>
 
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-core</artifactId>
-      <version>${jena.version}</version>
-      <classifier>tests</classifier>
-      <scope>test</scope>
+      <version>${jena-core.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-arq</artifactId>
-      <version>${jena.version}</version>
-      <classifier>tests</classifier>
-      <scope>test</scope>
+      <version>${jena-arq.version}</version>
     </dependency>
 
     <dependency>
@@ -55,11 +46,35 @@
       <version>0.2</version>
       <exclusions>
         <exclusion>
-	  <groupId>org.slf4j</groupId>
-	  <artifactId>slf4j-jdk14</artifactId>
-	</exclusion>
+	        <groupId>org.slf4j</groupId>
+	        <artifactId>slf4j-jdk14</artifactId>
+	    </exclusion>
+      <!-- (1/2) jsonld-java does not specify versions in its pom and there seems to be a conflict,
+      so we add the (currently) correct dependencies here -->
+        <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-cache</artifactId>
+        </exclusion>
+
       </exclusions>
     </dependency>
+
+      <!-- (2/2) jsonld-java does not specify versions in its pom and there seems to be a conflict,
+      so we add the (currently) correct dependencies here -->
+      <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.2.5</version>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient-cache</artifactId>
+          <version>4.2.5</version>
+      </dependency>
     
   </dependencies>
   

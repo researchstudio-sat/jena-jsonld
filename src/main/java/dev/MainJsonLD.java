@@ -18,91 +18,39 @@
 
 package dev;
 
-import static jenajsonld.JenaJSONLD.JSONLD ;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.util.FileUtils;
+import com.hp.hpl.jena.vocabulary.RDF;
+import jenajsonld.JsonLDReader;
+import jenajsonld.JsonLDWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream ;
-import java.io.ByteArrayOutputStream ;
-
-import jenajsonld.JenaJSONLD ;
-import org.apache.jena.atlas.logging.Log ;
-import org.apache.jena.riot.Lang ;
-import org.apache.jena.riot.RDFDataMgr ;
-import org.slf4j.Logger ;
-import org.slf4j.LoggerFactory ;
-
-import com.hp.hpl.jena.query.Dataset ;
-import com.hp.hpl.jena.query.DatasetFactory ;
-import com.hp.hpl.jena.rdf.model.Model ;
-import com.hp.hpl.jena.rdf.model.ModelFactory ;
-import com.hp.hpl.jena.vocabulary.RDF ;
+import java.io.*;
 
 public class MainJsonLD
 {
-    static { Log.setLog4j() ; }
     private static Logger log = LoggerFactory.getLogger("JsonLD") ;
     
-    public static void main(String[] args)
+    public static void main(String[] args) throws IOException
     {
-        JenaJSONLD.init() ;
-        
+      JsonLDWriter writer = new JsonLDWriter(true);
+      JsonLDReader reader = new JsonLDReader();
         {
-            Model m = RDFDataMgr.loadModel("D.ttl") ;
-            RDFDataMgr.write(System.out, m, JSONLD) ;
+            Model m = ModelFactory.createDefaultModel();
+            m.read(new FileReader("nested.ttl"), "",FileUtils.langTurtle);
+            writer.write(new PrintWriter(System.out), m.getGraph(), "");
             System.exit(0) ;
         }
 
         {
-            Model m = RDFDataMgr.loadModel("/home/afs/tmp/D.jsonld") ;
+            Model m = reader.read(new FileInputStream("testing/RIOT/jsonld/graph1.jsonld"), "").getDefaultModel() ;
             m.setNsPrefix("", "http://example/") ;
             m.setNsPrefix("rdf", RDF.getURI()) ;
-            RDFDataMgr.write(System.out, m, Lang.TTL) ;
+            m.write(System.out,FileUtils.langTurtle);
             System.exit(0) ;
         }
-
-        String DIR = "testing/RIOT/jsonld/" ;
-        Dataset ds = RDFDataMgr.loadDataset("D.trig") ;
-        RDFDataMgr.write(System.out, ds, JSONLD) ;
-        System.out.println("-------------------") ;
-        Model m = RDFDataMgr.loadModel("D.ttl") ;
-        RDFDataMgr.write(System.out, m, JSONLD) ;
-    }
-    
-    static void rtRJR(String filename)
-    {
-        System.out.println("## ---- : "+filename) ;
-        Dataset ds = RDFDataMgr.loadDataset(filename) ;
-        
-        ByteArrayOutputStream out = new ByteArrayOutputStream() ;
-        RDFDataMgr.write(out, ds, JSONLD) ;
-        RDFDataMgr.write(System.out, ds, JSONLD) ;
-        System.out.println() ;
-        ByteArrayInputStream r = new ByteArrayInputStream(out.toByteArray()) ;
-        
-        Dataset ds2 = DatasetFactory.createMem() ;
-        RDFDataMgr.read(ds2, r, null, JSONLD) ;
-//        if ( ! model.isIsomorphicWith(model2) ) 
-//            System.out.println("## ---- DIFFERENT") ;
-    }
-    
-    static void rtRJR2(String filename)
-    {
-        rtRJR2(filename, JSONLD.getName()) ;
-    }
-    
-    private static void rtRJR2(String filename, String formatName)
-    {
-        System.out.println("## ---- : "+filename) ;
-        
-        Model model = ModelFactory.createDefaultModel().read(filename) ;        
-        
-        ByteArrayOutputStream out = new ByteArrayOutputStream() ;
-        model.write(out, formatName) ;
-        ByteArrayInputStream r = new ByteArrayInputStream(out.toByteArray()) ;
-        
-        Model m2 = ModelFactory.createDefaultModel().read(r, null, formatName) ;
-
-        if ( ! model.isIsomorphicWith(m2) ) 
-            System.out.println("## ---- DIFFERENT") ;
     }
 
 }

@@ -18,21 +18,22 @@
 
 package jenajsonld;
 
-import java.util.Iterator ;
+import com.github.jsonldjava.core.JSONLDProcessingError;
+import com.github.jsonldjava.core.RDFDataset;
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.Quad;
+import org.openjena.riot.out.NodeToLabel;
+import org.openjena.riot.system.SyntaxLabels;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import org.apache.jena.atlas.logging.Log ;
-import org.apache.jena.riot.out.NodeToLabel ;
-import org.apache.jena.riot.system.SyntaxLabels ;
-
-import com.github.jsonldjava.core.JSONLDProcessingError ;
-import com.github.jsonldjava.core.RDFDataset ;
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype ;
-import com.hp.hpl.jena.graph.Node ;
-import com.hp.hpl.jena.sparql.core.DatasetGraph ;
-import com.hp.hpl.jena.sparql.core.Quad ;
+import java.util.Iterator;
 
 // From RDF to JSON-LD java structure.
 class JenaRDF2JSONLD implements com.github.jsonldjava.core.RDFParser {
+    Logger logger = LoggerFactory.getLogger(getClass());
     NodeToLabel labels = SyntaxLabels.createNodeToLabel() ;
 
     @Override
@@ -77,7 +78,7 @@ class JenaRDF2JSONLD implements com.github.jsonldjava.core.RDFParser {
             }
         }                
         else
-            Log.warn(JenaRDF2JSONLD.class, "unknown") ;
+            logger.warn("cannot convert object of type {}, was expecting {}",object.getClass().getName() , DatasetGraph.class.getName()) ;
         return result ;
     }
 

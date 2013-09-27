@@ -18,35 +18,35 @@
 
 package jenajsonld;
 
-import java.io.IOException ;
-import java.io.InputStream ;
-import java.util.List ;
-import java.util.Map ;
+import com.github.jsonldjava.core.JSONLD;
+import com.github.jsonldjava.core.JSONLDProcessingError;
+import com.github.jsonldjava.core.JSONLDTripleCallback;
+import com.github.jsonldjava.core.RDFDataset;
+import com.github.jsonldjava.utils.JSONUtils;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.sparql.core.DatasetImpl;
+import com.hp.hpl.jena.sparql.core.Quad;
+import org.openjena.atlas.lib.InternalErrorException;
+import org.openjena.riot.lang.LabelToNode;
+import org.openjena.riot.lang.SinkQuadsToDataset;
+import org.openjena.riot.system.SyntaxLabels;
 
-import org.apache.jena.atlas.lib.InternalErrorException ;
-import org.apache.jena.atlas.web.ContentType ;
-import org.apache.jena.riot.ReaderRIOT ;
-import org.apache.jena.riot.lang.LabelToNode ;
-import org.apache.jena.riot.system.StreamRDF ;
-import org.apache.jena.riot.system.SyntaxLabels ;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
-import com.github.jsonldjava.core.JSONLD ;
-import com.github.jsonldjava.core.JSONLDProcessingError ;
-import com.github.jsonldjava.core.JSONLDTripleCallback ;
-import com.github.jsonldjava.core.RDFDataset ;
-import com.github.jsonldjava.utils.JSONUtils ;
-import com.hp.hpl.jena.datatypes.RDFDatatype ;
-import com.hp.hpl.jena.graph.Node ;
-import com.hp.hpl.jena.graph.NodeFactory ;
-import com.hp.hpl.jena.graph.Triple ;
-import com.hp.hpl.jena.sparql.core.Quad ;
-import com.hp.hpl.jena.sparql.util.Context ;
-
-public class JsonLDReader implements ReaderRIOT
+public class JsonLDReader
 {
-    @Override
-    public void read(InputStream in, String baseURI, ContentType ct, final StreamRDF output, Context context)
+
+
+    public Dataset read(InputStream in, String baseURI)
     {
+        Dataset dataset = new DatasetImpl(ModelFactory.createDefaultModel());
+        final SinkQuadsToDataset sink = new SinkQuadsToDataset(dataset.asDatasetGraph());
         try
         {
             Object jsonObject = JSONUtils.fromInputStream(in);
@@ -67,23 +67,23 @@ public class JsonLDReader implements ReaderRIOT
                                     Node s = createNode(t, "subject") ;
                                     Node p = createNode(t, "predicate") ;
                                     Node o = createNode(t, "object") ;
-                                    Triple triple = Triple.create(s,p,o) ;
-                                    output.triple(triple) ;
+                                    Quad quad = Quad.create(null, s, p, o) ;
+                                    sink.send(quad);
                             }
                         } else {
                             @SuppressWarnings("unchecked")
                             List<Map<String, Object>> quads = (List<Map<String, Object>>)x ;
-                            Node g = NodeFactory.createURI(gn) ;    // Bnodes?
+                            Node g = Node.createURI(gn) ;    // Bnodes?
                             for ( Map<String, Object> q : quads )
                             {
                                     Node s = createNode(q, "subject") ;
                                     Node p = createNode(q, "predicate") ;
                                     Node o = createNode(q, "object") ;
-                                    output.quad(Quad.create(g,s,p,o)) ;
+                                    Quad quad = Quad.create(g, s, p, o) ;
+                                    sink.send(quad);
                             }
-                            
+
                         }
-                        
                     }
                     return null ;
                 }} ;
@@ -96,6 +96,7 @@ public class JsonLDReader implements ReaderRIOT
         {
             e.printStackTrace();
         }
+      return dataset;
     }
     
     private LabelToNode labels =  SyntaxLabels.createLabelToNode() ;
@@ -116,7 +117,7 @@ public class JsonLDReader implements ReaderRIOT
         String type = (String)map.get("type") ;
         String lex = (String)map.get("value") ;
         if ( type.equals(IRI) )
-          return NodeFactory.createURI(lex) ; 
+          return Node.createURI(lex) ;
         else if ( type.equals(BLANK_NODE) )
             return labels.get(null,  lex) ;
         else if ( type.equals(LITERAL) )
@@ -124,11 +125,11 @@ public class JsonLDReader implements ReaderRIOT
             String lang = (String)map.get("language") ;
             String datatype = (String)map.get("datatype") ;
             if ( lang == null && datatype == null )
-                return NodeFactory.createLiteral(lex) ;
+                return Node.createLiteral(lex) ;
             if ( lang != null )
-                return NodeFactory.createLiteral(lex, lang, null) ;
-            RDFDatatype dt = NodeFactory.getType(datatype) ;
-            return NodeFactory.createLiteral(lex, dt) ;
+                return Node.createLiteral(lex, lang, null) ;
+            RDFDatatype dt = Node.getType(datatype) ;
+            return Node.createLiteral(lex, dt) ;
         }
         else
             throw new InternalErrorException("Node is not a IRI, bNode or a literal: "+type) ;
@@ -154,17 +155,17 @@ public class JsonLDReader implements ReaderRIOT
         if ( str.startsWith("_:") )
             return labels.get(null, str) ;
         else
-            return NodeFactory.createURI(str) ;
+            return Node.createURI(str) ;
     }
     
     private Node createLiteral(String lex, String datatype, String lang)
     {
         if ( lang == null && datatype == null )
-            return NodeFactory.createLiteral(lex) ;
+            return Node.createLiteral(lex) ;
         if ( lang != null )
-            return NodeFactory.createLiteral(lex, lang, null) ;
-        RDFDatatype dt = NodeFactory.getType(datatype) ;
-        return NodeFactory.createLiteral(lex, dt) ;
+            return Node.createLiteral(lex, lang, null) ;
+        RDFDatatype dt = Node.getType(datatype) ;
+        return Node.createLiteral(lex, dt) ;
     }
 
 }
