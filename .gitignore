@@ -13,6 +13,7 @@ J
 *.iws
 /*/.idea
 */.idea
+.idea
 
 # NetBeans
 nbproject
