@@ -6,3 +6,25 @@ J
 *.jar
 *.war
 *.ear
+
+# IntelliJ Files
+*.iml
+*.ipr
+*.iws
+/*/.idea
+*/.idea
+.idea
+
+# NetBeans
+nbproject
+
+# Eclipse
+.classpath
+.project
+.settings
+
+# Buildtools
+build.properties
+mvn.properties
+.checkstyle
+maven-ant-tasks-*.jar

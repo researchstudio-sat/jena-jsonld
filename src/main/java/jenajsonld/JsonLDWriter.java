@@ -18,35 +18,34 @@
 
 package jenajsonld;
 
-import java.io.IOException ;
-import java.io.OutputStream ;
-import java.io.OutputStreamWriter ;
-import java.io.Writer ;
-import java.util.* ;
-import java.util.Map.Entry ;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.github.jsonldjava.core.JSONLD;
+import com.github.jsonldjava.core.JSONLDProcessingError;
+import com.github.jsonldjava.core.Options;
+import com.github.jsonldjava.utils.JSONUtils;
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.util.Context;
+import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.jena.atlas.io.IO;
+import org.apache.jena.atlas.iterator.Action;
+import org.apache.jena.atlas.iterator.Iter;
+import org.apache.jena.atlas.lib.Chars;
+import org.apache.jena.iri.IRI;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.writer.WriterDatasetRIOTBase;
 
-import org.apache.jena.atlas.io.IO ;
-import org.apache.jena.atlas.iterator.Action ;
-import org.apache.jena.atlas.iterator.Iter ;
-import org.apache.jena.atlas.lib.Chars ;
-import org.apache.jena.iri.IRI ;
-import org.apache.jena.riot.Lang ;
-import org.apache.jena.riot.RDFFormat ;
-import org.apache.jena.riot.system.PrefixMap ;
-import org.apache.jena.riot.writer.WriterDatasetRIOTBase ;
-
-import com.fasterxml.jackson.core.JsonGenerationException ;
-import com.fasterxml.jackson.databind.JsonMappingException ;
-import com.github.jsonldjava.core.JSONLD ;
-import com.github.jsonldjava.core.JSONLDProcessingError ;
-import com.github.jsonldjava.core.Options ;
-import com.github.jsonldjava.utils.JSONUtils ;
-import com.hp.hpl.jena.graph.Graph ;
-import com.hp.hpl.jena.graph.Node ;
-import com.hp.hpl.jena.graph.Triple ;
-import com.hp.hpl.jena.sparql.core.DatasetGraph ;
-import com.hp.hpl.jena.sparql.util.Context ;
-import com.hp.hpl.jena.vocabulary.RDF ;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.*;
+import java.util.Map.Entry;
 
 class JsonLDWriter extends WriterDatasetRIOTBase
 {
@@ -123,7 +122,16 @@ class JsonLDWriter extends WriterDatasetRIOTBase
     private static void addPrefixes(Map<String, Object> ctx, PrefixMap prefixMap) {
         Map<String, IRI> pmap = prefixMap.getMapping() ;
         for ( Entry<String, IRI> e : pmap.entrySet()) {
+          String key = e.getKey();
+          IRI iri = e.getValue();
+          if (key.trim().length() == 0){
+            if  (iri != null) {
+              //set default URI prefix
+              ctx.put("@base",e.getValue().toString());
+            } //ignore if the value is empty
+          } else {
             ctx.put(e.getKey(),  e.getValue().toString()) ;
+          }
         }
         
     }
@@ -134,23 +142,37 @@ class JsonLDWriter extends WriterDatasetRIOTBase
         Action<Triple> x = new Action<Triple>() {
             @Override
             public void apply(Triple item) {
-                Node p = item.getPredicate() ;
-                if ( p.equals( RDF.type.asNode() ))
-                    return ;
-                String x = p.getLocalName() ;
-                if ( dups.contains(x))
-                    return ;
-                
-                if ( ctx.containsKey(x) ) {
-                    // Check different URI
+              Node p = item.getPredicate() ;
+              Node o = item.getObject();
+              if ( p.equals( RDF.type.asNode() ))
+                return ;
+              String x = p.getLocalName() ;
+              if ( dups.contains(x))
+                return ;
+
+              if ( ctx.containsKey(x) ) {
+                // Check different URI
 //                    pmap2.remove(x) ;
-//                    dups.add(x) ;  
+//                    dups.add(x) ;
+              } else if (o.isBlank() || o.isURI()) {
+                //add property as a property (the object is an IRI)
+                Map<String, Object> x2 = new LinkedHashMap<String, Object>();
+                x2.put("@id", p.getURI()) ;
+                x2.put("@type", "@id") ;
+                ctx.put(x, x2) ;
+              } else if (o.isLiteral()) {
+                String literalDatatypeURI = o.getLiteralDatatypeURI();
+                if (literalDatatypeURI != null){
+                  //add property as a typed attribute (the object is a typed literal)
+                  Map<String, Object> x2 = new LinkedHashMap<String, Object>();
+                  x2.put("@id", p.getURI()) ;
+                  x2.put("@type", literalDatatypeURI) ;
+                  ctx.put(x, x2) ;
                 } else {
-                    Map<String, Object> x2 = new LinkedHashMap<String, Object>();
-                    x2.put("@id", p.getURI()) ;
-                    x2.put("@type", "@id") ;
-                    ctx.put(x, x2) ;
+                  //add property as an untyped attribute (the object is an untyped literal)
+                  ctx.put(x,p.getURI());
                 }
+              }
             }
         } ; 
         
